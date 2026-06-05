@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
-# make.sh — Configure, build, package, and test rocwmma (ROCm 7.13 / gfx1103)
+# va-make — Configure, build, package, and test rocwmma (ROCm 7.13 / gfx1103)
 #
 # Usage:
-#   ./make.sh [options] <command>
+#   ./va-make [options] <command>
 #
 # Commands:
 #   build       Configure + build (headers + cmake export files)
@@ -24,12 +24,12 @@
 #   -h, --help              Show this help
 #
 # Examples:
-#   ./make.sh build
-#   ./make.sh package
-#   ./make.sh --build-type Debug build
-#   ./make.sh --test-suite regression test
-#   ./make.sh --clean-first package
-#   ./make.sh --gpu-targets "gfx1100;gfx1103" package
+#   ./va-make build
+#   ./va-make package
+#   ./va-make --build-type Debug build
+#   ./va-make --test-suite regression test
+#   ./va-make --clean-first package
+#   ./va-make --gpu-targets "gfx1100;gfx1103" package
 # =============================================================================
 
 set -euo pipefail

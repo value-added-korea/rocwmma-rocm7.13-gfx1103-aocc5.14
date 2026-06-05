@@ -83,9 +83,9 @@ pkg-config --modversion libxml-2.0
 
 ## Building and packaging
 
-### Use `make.sh` — not the VSCode CMake extension
+### Use `va-make` — not the VSCode CMake extension
 
-Build this project using **`make.sh`** from a terminal, not the CMake
+Build this project using **`va-make`** from a terminal, not the CMake
 integration in VSCode (or any IDE).
 
 **Why:** VSCode's CMake Tools extension picks up the default system compiler
@@ -93,20 +93,20 @@ integration in VSCode (or any IDE).
 `amdclang`/`amdclang++` from ROCm 7.13. If the wrong compiler is used, the
 configure step will succeed silently but the generated headers will lack
 gfx1103 support, and downstream HIP projects will fail to compile with
-cryptic errors. `make.sh` enforces the correct compiler and runs preflight
+cryptic errors. `va-make` enforces the correct compiler and runs preflight
 checks before touching the build tree.
 
 ### Quick start
 
 ```bash
 # Build + produce packages (deb, rpm, tar.gz, zip)
-./make.sh package
+./va-make.sh package
 
 # Build only (no packages)
-./make.sh build
+./va-make.sh build
 
 # Clean build tree
-./make.sh clean
+./va-make.sh clean
 ```
 
 All four packages are written to `build/release/`. The primary artifact is:
@@ -131,10 +131,10 @@ sudo ln -sf /opt/rocwmma-rocm7.13/include/rocwmma /opt/rocm/include/rocwmma
 
 ---
 
-## make.sh reference
+## va-make reference
 
 ```
-Usage: ./make.sh [options] <command>
+Usage: ./va-make.sh [options] <command>
 
 Commands:
   build       Configure + build
