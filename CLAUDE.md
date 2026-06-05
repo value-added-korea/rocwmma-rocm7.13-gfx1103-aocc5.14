@@ -49,7 +49,7 @@ This repo was created and set up in a Claude Code session on **2026-06-05**.
 | `library/include/rocwmma/internal/config.hpp` | `#elif defined(__gfx1103__)` block |
 | `library/include/rocwmma/internal/constants.hpp` | `AMDGCN_ARCH_ID_GFX1103 = 0x1103` and `#elif ROCWMMA_ARCH_GFX1103` |
 | `library/include/rocwmma/internal/wmma_impl.hpp` | `AMDGCN_ARCH_ID_GFX1103` in `enable_gfx11_t` AND `enable_gfx11_gfx12_t` |
-| `library/include/rocwmma/internal/flow_control.hpp` | covered by `ROCWMMA_ARCH_GFX11` umbrella |
+| `library/include/rocwmma/internal/flow_control.hpp` | no arch guards needed — generic sync primitives, gfx1103 covered by `ROCWMMA_ARCH_GFX11` via `config.hpp:161` |
 | `samples/common.hpp` | `deviceName.find("gfx1103")` |
 | `test/hip_device.cpp` | `gfx1103` device name lookup |
 | `CMakeLists.txt:115` | `gfx1103` in the `DEFAULT_GPU_TARGETS` semicolon list |
@@ -111,11 +111,12 @@ sudo dpkg -i build/release/rocwmma-*.deb
 Package layout:
 ```
 /opt/rocwmma-rocm7.13/
-  include/rocwmma/      <- headers
-  lib/cmake/rocwmma/    <- cmake config
+  include/rocwmma/           <- headers
+  lib/cmake/rocwmma/         <- cmake config
+  share/doc/rocwmma/         <- LICENSE.md
 ```
 
-**Note:** rocWMMA is header-only (`HEADER_ONLY` in CMakeLists.txt:237), so the build is fast. The `.deb` is generated via CPack. If you need RPM instead, ensure `rpmbuild` is installed and re-run `cmake --build . --target package`.
+**Note:** rocWMMA is header-only (`HEADER_ONLY` in CMakeLists.txt:241), so the build is fast. The `.deb` is generated via CPack. If you need RPM instead, ensure `rpmbuild` is installed and re-run `cmake --build . --target package`.
 
 ### CMake options
 

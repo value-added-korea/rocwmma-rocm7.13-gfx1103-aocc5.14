@@ -71,7 +71,8 @@ if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 endif()
 if( NOT CPACK_PACKAGING_INSTALL_PREFIX )
   set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Install path prefix for packages.")
-  set(CPACK_SET_DESTDIR OFF)
+  # Note: rocm_create_package() unconditionally sets CPACK_SET_DESTDIR=ON on Linux,
+  # so any CPACK_SET_DESTDIR assignment here would be overridden.
 endif()
 set(BUILD_SHARED_LIBS ON)
 
