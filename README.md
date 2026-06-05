@@ -1,125 +1,177 @@
-# rocWMMA
+# rocwmma — ROCm 7.13 / gfx1103 (RDNA3 iGPU) / AOCC 5.14
 
-Welcome! rocWMMA is a C++ library for accelerating mixed-precision matrix multiply-accumulate (MMA)
-operations leveraging AMD GPU hardware. rocWMMA makes it easier to break down MMA problems
-into fragments and distribute block-wise MMA operations in parallel across GPU wavefronts. The API
-consists of a header library, that can be used to compile MMA acceleration directly into GPU kernel
-device code. This can benefit from compiler optimization in the generation of kernel assembly, and
-doesn't incur additional overhead costs of linking to external runtime libraries or having to launch
-separate kernels.
+> **Band-aid package.** ROCm 7.13 does not ship `rocwmma`. This repository
+> provides it as a standalone installable `.deb`/`.rpm` so that `llama.cpp`
+> and other HIP consumers can build on AMD RDNA3 integrated GPUs without
+> waiting for an upstream ROCm release.
 
-rocWMMA includes sample projects to validate and demonstrate API usage. These include simple GEMMs,
-performant GEMMs, DLRM, GEMV and hipRTC integration. Community-contributed samples demonstrating
-advanced techniques and specialized use cases are available in samples/community/ (opt-in via
-ROCWMMA_BUILD_COMMUNITY_SAMPLES=ON).
+## Target hardware
 
-The test suite includes validation and benchmarking projects that focus on unit testing, GEMMs and DLRM.
-
-> [!NOTE]
-> The published rocWMMA documentation is available at [rocWMMA](https://rocm.docs.amd.com/projects/rocWMMA/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `projects/rocwmma/docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
-
-
-## Requirements
-
-rocWMMA currently supports the following AMD GPU architectures:
-
-* CDNA class GPU featuring matrix core support: gfx908, gfx90a, gfx942, gfx950 as 'gfx9'
-* RDNA class GPU featuring AI acceleration support: gfx1100, gfx1101, gfx1102, gfx1150, gfx1151, gfx1152, gfx1153 as 'gfx11'; gfx1200, gfx1201 as 'gfx12'
-
-Dependencies:
-
-* Minimum ROCm version support is 6.4.
-* Minimum cmake version support is 3.14.
-* Minimum ROCm-cmake version support is 0.8.0.
-* Minimum rocBLAS version support is rocBLAS 4.0.0 for ROCm 6.0* (or ROCm packages rocblas and rocblas-dev).
-* Minimum ROCm SMI version support is 7.6.0** (or ROCm packages rocm-smi-lib and librocm-smi-dev).
-* Minimum HIP runtime version support is 4.3.0 (or ROCm package hip-runtime-amd).
-* Minimum LLVM OpenMP runtime dev package version support is 10.0 (available as ROCm package rocm-llvm-dev).
-
-```note::
-    * = if using rocBLAS for validation.
-    ** = if building benchmark tests (configuring with ROCWMMA_BUILD_BENCHMARK_TESTS=ON).
-
-    It is best to use available ROCm packages from the same release where applicable.
-```
-
-## Build with CMake
-
-For more detailed information, please refer to the [rocWMMA installation guide](https://rocm.docs.amd.com/projects/rocWMMA/en/latest/install/installation.html).
-
-### Project options
-
-|Option|Description|Default value|
+| GPU | Codename | APU |
 |---|---|---|
-|GPU_TARGETS|Build code for specific GPU target(s)|gfx908;gfx90a;gfx942;gfx950;gfx1100;gfx1101;gfx1102;gfx1150;gfx1151;gfx1152;gfx1153;gfx1200;gfx1201|
-|AMDGPU_TARGETS|(Deprecated) Build code for specific GPU target(s)|gfx908;gfx90a;gfx942;gfx950;gfx1100;gfx1101;gfx1102;gfx1150;gfx1151;gfx1152;gfx1153;gfx1200;gfx1201|
-|ROCWMMA_BUILD_TESTS|Build Tests|ON|
-|ROCWMMA_BUILD_SAMPLES|Build Samples|ON|
-|ROCWMMA_BUILD_COMMUNITY_SAMPLES|Build community-contributed samples|OFF|
-|ROCWMMA_BUILD_DOCS|Build doxygen documentation from code|OFF|
-|ROCWMMA_BUILD_ASSEMBLY|Generate assembly files|OFF|
-|ROCWMMA_BUILD_VALIDATION_TESTS|Build validation tests |ON (requires ROCWMMA_BUILD_TESTS=ON)|
-|ROCWMMA_BUILD_REGRESSION_TESTS|Build regression testing coverage |ON (requires ROCWMMA_BUILD_TESTS=ON)|
-|ROCWMMA_BUILD_BENCHMARK_TESTS|Build benchmark tests |OFF (requires ROCWMMA_BUILD_TESTS=ON)|
-|ROCWMMA_BUILD_EXTENDED_TESTS|Build extended testing coverage |OFF (requires ROCWMMA_BUILD_TESTS=ON)|
-|ROCWMMA_VALIDATE_WITH_ROCBLAS|Use rocBLAS for validation tests|ON (requires ROCWMMA_BUILD_VALIDATION_TESTS=ON)|
-|ROCWMMA_BENCHMARK_WITH_ROCBLAS|Include rocBLAS benchmarking data|OFF (requires ROCWMMA_BUILD_BENCHMARK_TESTS=ON)|
-|ROCWMMA_USE_SYSTEM_GOOGLETEST|Use system Google Test library instead of downloading and building it|OFF (requires ROCWMMA_BUILD_TESTS=ON)|
+| Radeon 780M / 760M | Phoenix | Ryzen 7040 series |
+| Radeon 880M / 860M | Hawk Point | Ryzen 8040 series |
 
-### Example configurations
+Architecture target: **gfx1103** (RDNA3, Wave32, WMMA instruction set).
 
-By default, the project is configured in release mode and is linked against rocBLAS for validating
-results. Here are some configuration examples:
+---
 
-|Configuration|Command|
-|---|---|
-|Basic|`CC=/opt/rocm/bin/amdclang CXX=/opt/rocm/bin/amdclang++ cmake -B<build_dir> .`|
-|Targeting gfx908|`CC=/opt/rocm/bin/amdclang CXX=/opt/rocm/bin/amdclang++ cmake -B<build_dir> . -DGPU_TARGETS=gfx908:xnack-` |
-|Debug build|`CC=/opt/rocm/bin/amdclang CXX=/opt/rocm/bin/amdclang++ cmake -B<build_dir> . -DCMAKE_BUILD_TYPE=Debug` |
-|Build without rocBLAS (default on)|`CC=/opt/rocm/bin/amdclang CXX=/opt/rocm/bin/amdclang++ cmake -B<build_dir> . -DROCWMMA_VALIDATE_WITH_ROCBLAS=OFF -DROCWMMA_BENCHMARK_WITH_ROCBLAS=OFF` |
+## Intended use case
 
-After configuration, build with `cmake --build <build_dir> -- -j<nproc>`
+Install this package on a system with ROCm 7.13 and AOCC 5.14 to provide the
+missing `rocwmma` headers and CMake config that the ROCm 7.13 release omitted.
+After installation, HIP projects that call `find_package(rocwmma)` — such as
+`llama.cpp` with `-DGGML_HIPBLAS=ON` — will find the headers automatically.
 
-## Documentation
+This is a **header-only** library. No GPU compilation happens during the build
+of this package itself; the MMA kernel code is compiled into the *consumer*
+project at its build time.
 
-For more comprehensive documentation on installation, samples and test contents, API reference and programmer's guide you can build the documentation locally in different ways.
+---
 
-### Html
+## Required packages
+
+Install these before building. All three must be present; the build will check
+for them and fail with a clear message if any are missing.
+
+### 1 — ROCm 7.13
+
+The complete ROCm 7.13 stack. Provides `amdclang++`, HIP runtime and headers,
+and the rocm-cmake build tools.
 
 ```bash
-cd docs
-
-pip3 install -r sphinx/requirements.txt
-
-python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+# Verify
+find /opt/rocm -maxdepth 3 -path "*/.info/version" | xargs cat
+# Expected: 7.13.0
 ```
 
-The HTML documentation can be viewed in your browser by opening the `docs/_build/html/index.html` result.
+### 2 — AOCC 5.14 (amdclang++)
 
-### Pdf
+Shipped as part of ROCm 7.13. The compiler must be available at
+`/opt/rocm/bin/amdclang++`.
 
 ```bash
-cd docs
-
-sudo apt-get update
-sudo apt-get install doxygen
-sudo apt-get install texlive-latex-base texlive-latex-extra
-
-pip3 install -r sphinx/requirements.txt
-
-python3 -m sphinx -T -E -b latex -d _build/doctrees -D language=en . _build/latex
-
-cd _build/latex
-
-pdflatex rocwmma.tex
+# Verify
+/opt/rocm/bin/amdclang++ --version
+# Expected: AMD clang version 23.x.x ...
 ```
 
-Running the above commands generates `rocwmma.pdf`.
+### 3 — libxml2 (AOCC-compatible build)
 
-The latest official documentation for rocWMMA is available at:
-[https://rocm.docs.amd.com/projects/rocWMMA/en/latest/index.html](https://rocm.docs.amd.com/projects/rocWMMA/en/latest/index.html).
+ROCm's CMake build tooling requires libxml2. The standard distro package
+(`libxml2-dev`) is built with GCC and can cause link-time ABI issues when the
+rest of the stack uses AOCC 5.14. Use the AOCC-compatible build from:
 
+**[value-added-korea/libxml2\_aocc1\_amd64](git@github.com:value-added-korea/-libxml2_aocc1_amd64.git)**
 
-## Contributing to the rocWMMA Library
+```bash
+# Clone and install
+git clone git@github.com:value-added-korea/-libxml2_aocc1_amd64.git
+cd -libxml2_aocc1_amd64
+sudo dpkg -i libxml2*.deb
 
-Community collaboration is encouraged! If you are considering contributing, please follow the [rocWMMA Contribution Guide](https://github.com/ROCm/rocm-libraries/blob/develop/projects/rocwmma/CONTRIBUTING.md) to get started.
+# Verify
+pkg-config --modversion libxml-2.0
+```
+
+> **Why not `apt install libxml2-dev`?** The distro package links against
+> GCC's libstdc++. Mixing that with AOCC 5.14's libc++ in the same link
+> step can produce hard-to-diagnose runtime crashes or symbol resolution
+> failures. The AOCC-compatible build above avoids this.
+
+---
+
+## Building and packaging
+
+### Use `make.sh` — not the VSCode CMake extension
+
+Build this project using **`make.sh`** from a terminal, not the CMake
+integration in VSCode (or any IDE).
+
+**Why:** VSCode's CMake Tools extension picks up the default system compiler
+(`gcc`/`g++`) or whichever kit is selected in its UI. This project **requires**
+`amdclang`/`amdclang++` from ROCm 7.13. If the wrong compiler is used, the
+configure step will succeed silently but the generated headers will lack
+gfx1103 support, and downstream HIP projects will fail to compile with
+cryptic errors. `make.sh` enforces the correct compiler and runs preflight
+checks before touching the build tree.
+
+### Quick start
+
+```bash
+# Build + produce packages (deb, rpm, tar.gz, zip)
+./make.sh package
+
+# Build only (no packages)
+./make.sh build
+
+# Clean build tree
+./make.sh clean
+```
+
+All four packages are written to `build/release/`. The primary artifact is:
+
+```
+build/release/rocwmma-dev_2.2.1-<commit>_amd64.deb
+```
+
+### Install
+
+```bash
+sudo dpkg -i build/release/rocwmma-dev_*.deb
+```
+
+Headers install to `/opt/rocwmma-rocm7.13/include/rocwmma/`.
+
+### ROCm symlink (for consumers that look in `/opt/rocm`)
+
+```bash
+sudo ln -sf /opt/rocwmma-rocm7.13/include/rocwmma /opt/rocm/include/rocwmma
+```
+
+---
+
+## make.sh reference
+
+```
+Usage: ./make.sh [options] <command>
+
+Commands:
+  build       Configure + build
+  package     Configure + build + produce .deb/.rpm/.tar.gz/.zip
+  test        Configure (tests enabled) + build + run test suite
+  clean       Remove build directory
+
+Options:
+  --rocm-path <path>       ROCm root              (default: /opt/rocm)
+  --gpu-targets <targets>  Semicolon-separated    (default: gfx1103)
+  --build-dir <path>       Build tree             (default: build/release)
+  --prefix <path>          Install prefix         (default: /opt/rocwmma-rocm7.13)
+  --build-type <type>      Release|Debug|RelWithDebInfo  (default: Release)
+  --jobs <n>               Parallel jobs          (default: nproc)
+  --test-suite <set>       smoke|regression|extended    (default: smoke)
+  --skip-preflight         Skip prerequisite checks
+  --clean-first            Wipe build dir before running
+  -h, --help               Show help
+```
+
+---
+
+## Consumer CMake integration
+
+After `dpkg -i` (and optionally creating the symlink above):
+
+```cmake
+find_package(rocwmma REQUIRED PATHS /opt/rocwmma-rocm7.13/lib/cmake/rocwmma)
+target_link_libraries(my_hip_target PRIVATE roc::rocwmma)
+```
+
+---
+
+## Version
+
+This package is version **2.2.1**, tracking upstream `ROCm/rocm-libraries`
+at commit `97073f35d4` (ROCm 7.13 develop). The version was bumped from
+upstream 2.2.0 to distinguish this fork.
+
+Upstream source: `ROCm/rocm-libraries` → `projects/rocwmma/`
