@@ -184,6 +184,44 @@ rocWMMA is a **header-only** C++ template library. Consumers `#include <rocwmma/
 
 ---
 
+### ROCm 7.13 package naming
+
+This distribution uses `amdrocm-*7.13` package names, **not** the upstream
+`rocm-core` / `hip-runtime-amd` names. The `.deb` produced by this repo
+declares the correct deps:
+
+```
+Depends: amdrocm-base7.13, amdrocm-runtime7.13, libomp-dev
+```
+
+If you see `dpkg: dependency problems — rocwmma-dev depends on rocm-core`,
+the package was built without the `ROCM_DEP_ROCMCORE FALSE` override in
+CMakeLists.txt. The override is at the `# Package` block (line ~230).
+
+Minimum packages required on the build host:
+
+| Package | Role |
+|---|---|
+| `amdrocm-base7.13` | ROCm base |
+| `amdrocm-runtime7.13` | HIP runtime |
+| `amdrocm-developer-tools7.13` | `amdclang++`, cmake tools, headers |
+| `amdrocm-core-sdk7.13-gfx1103` | gfx1103 device library |
+
+### ROCm 7.13 directory layout — `find_package(hip)` fix
+
+ROCm 7.13 stores headers under `/opt/rocm/core/include/` (symlink →
+`core-7.13/include/`), not at `/opt/rocm/include/`. The upstream
+`hip-config.cmake` at `/opt/rocm/lib/cmake/hip/` hard-codes
+`${PACKAGE_PREFIX_DIR}/include` = `/opt/rocm/include` which does not exist.
+
+**Fix already applied in CMakeLists.txt:** `/opt/rocm/core` is prepended to
+`CMAKE_PREFIX_PATH` (before the broken `/opt/rocm` entry) so `find_package(hip)`
+resolves the correct config from `/opt/rocm/core/lib/cmake/hip/`.
+
+If you see `File or directory /opt/rocm/include referenced by variable
+hip_INCLUDE_DIR does not exist`, check that the `list(PREPEND CMAKE_PREFIX_PATH
+"${ROCM_PATH}/core" ...)` block is present at CMakeLists.txt:80.
+
 ### Troubleshooting
 
 **CMake configure: CheckGFX1103 failure**

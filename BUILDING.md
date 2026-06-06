@@ -5,17 +5,19 @@ This document covers how to configure, build, and produce installable packages
 
 ## Prerequisites
 
-| Requirement | Version | Check |
+| Requirement | Package | Check |
 |---|---|---|
-| ROCm | 7.13 | `cat /opt/rocm/.info/version` |
-| amdclang++ (AOCC) | 5.14 | `/opt/rocm/bin/amdclang++ --version` |
+| ROCm 7.13 base | `amdrocm-base7.13` | `find /opt/rocm -maxdepth 3 -path "*/.info/version" \| xargs cat` |
+| ROCm 7.13 runtime | `amdrocm-runtime7.13` | `find /opt/rocm -maxdepth 4 -name hip_runtime.h` |
+| ROCm 7.13 dev tools | `amdrocm-developer-tools7.13` | `/opt/rocm/bin/amdclang++ --version` |
 | CMake | ≥ 3.14 | `cmake --version` |
-| HIP dev headers | (ROCm 7.13) | `ls /opt/rocm/include/hip/hip_runtime.h` |
-| libxml2 dev | any | `pkg-config --modversion libxml-2.0` |
-| rpmbuild | any | `rpmbuild --version` (RPM only) |
+| libxml2 (AOCC build) | see README | `pkg-config --modversion libxml-2.0` |
+| rpmbuild | `rpm` | `rpmbuild --version` (RPM only) |
 
-All paths below assume ROCm is installed at `/opt/rocm`. If yours differs, replace
-`/opt/rocm` with your actual ROCm root in every command.
+ROCm 7.13 uses the `amdrocm-*7.13` package naming scheme. Headers live under
+`/opt/rocm/core/include/` (symlink → `/opt/rocm/core-7.13/include/`), not
+directly under `/opt/rocm/include/`. The build system accounts for this
+automatically — do not create `/opt/rocm/include` manually.
 
 ---
 

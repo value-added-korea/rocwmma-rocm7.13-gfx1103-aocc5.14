@@ -36,19 +36,31 @@ for them and fail with a clear message if any are missing.
 
 ### 1 — ROCm 7.13
 
-The complete ROCm 7.13 stack. Provides `amdclang++`, HIP runtime and headers,
-and the rocm-cmake build tools.
+ROCm 7.13 uses the `amdrocm-*7.13` package naming scheme. The minimum required
+packages are:
+
+| Package | Role |
+|---|---|
+| `amdrocm-base7.13` | ROCm base libraries |
+| `amdrocm-runtime7.13` | HIP runtime |
+| `amdrocm-developer-tools7.13` | `amdclang++`, ROCm cmake tools, headers |
+| `amdrocm-core-sdk7.13-gfx1103` | gfx1103 device library |
 
 ```bash
-# Verify
+# Verify ROCm version
 find /opt/rocm -maxdepth 3 -path "*/.info/version" | xargs cat
 # Expected: 7.13.0
 ```
 
+> **Note:** The packages are named `amdrocm-*7.13`, not `rocm-*`. The standard
+> upstream names (`rocm-core`, `hip-runtime-amd`) do not exist in this
+> distribution. This package's `.deb` declares `amdrocm-base7.13` and
+> `amdrocm-runtime7.13` as its dependencies.
+
 ### 2 — AOCC 5.14 (amdclang++)
 
-Shipped as part of ROCm 7.13. The compiler must be available at
-`/opt/rocm/bin/amdclang++`.
+Shipped as part of `amdrocm-developer-tools7.13`. The compiler must be
+available at `/opt/rocm/bin/amdclang++`.
 
 ```bash
 # Verify

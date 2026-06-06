@@ -76,7 +76,15 @@ if( NOT CPACK_PACKAGING_INSTALL_PREFIX )
 endif()
 set(BUILD_SHARED_LIBS ON)
 
-# This helps cmake properly find hip-config.cmake
+# This helps cmake properly find hip-config.cmake.
+# On ROCm 7.13 the versioned layout places headers and the correct hip-config.cmake
+# under /opt/rocm/core/ (symlink → core-7.13/). The top-level /opt/rocm/lib/cmake/hip/
+# hip-config.cmake references /opt/rocm/include which does not exist in this layout.
+# Prepend the core/ subtree so find_package(hip) resolves the right config first.
+list( PREPEND CMAKE_PREFIX_PATH
+    "${ROCM_PATH}/core"
+    "$ENV{ROCM_PATH}/core"
+    /opt/rocm/core )
 list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} ${ROCM_PATH} /opt/rocm )
 # Append our library helper cmake path and the cmake path for hip (for convenience).
 # Users may override HIP path by specifying their own in CMAKE_MODULE_PATH
@@ -220,12 +228,12 @@ if(ROCWMMA_BUILD_TESTS)
 endif()
 
 # Package
-if(BUILD_ADDRESS_SANITIZER)
-  set(DEPENDS_HIP_RUNTIME "hip-runtime-amd-asan" )
-else()
-  set(DEPENDS_HIP_RUNTIME "hip-runtime-amd" )
-endif()
-rocm_package_add_dependencies("${DEPENDS_HIP_RUNTIME} >= 4.5.0")
+# ROCm 7.13 uses the amdrocm-* package naming scheme instead of the upstream
+# rocm-core / hip-runtime-amd names. Disable the auto-injected rocm-core dep
+# and declare the correct versioned dependencies explicitly.
+set(ROCM_DEP_ROCMCORE FALSE CACHE BOOL "Add dependency on rocm-core package" FORCE)
+rocm_package_add_deb_dependencies("amdrocm-base7.13, amdrocm-runtime7.13")
+rocm_package_add_rpm_dependencies("amdrocm-base7.13, amdrocm-runtime7.13")
 rocm_package_add_deb_dependencies("libomp-dev")
 rocm_package_add_rpm_dependencies("libomp-devel")
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")

@@ -47,3 +47,7 @@ build*
 \#*\#
 *~
 *.log
+
+
+# AI
+CLAUDE.md
